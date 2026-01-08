@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - 个人记账系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
+    <style>
+        .income-card{background:linear-gradient(135deg,#28a745 0%,#20c997 100%)}
+        .expense-card{background:linear-gradient(135deg,#dc3545 0%,#fd7e14 100%)}
+        .balance-card{background:linear-gradient(135deg,#007bff 0%,#6f42c1 100%)}
+        .stat-card .card-body{color:white}
+        .text-income{color:#28a745}
+        .text-expense{color:#dc3545}
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="bi bi-wallet2"></i> 个人记账</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link active" href="/"><i class="bi bi-house"></i> 首页</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/transaction/list"><i class="bi bi-list-ul"></i> 记录列表</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card stat-card income-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title"><i class="bi bi-arrow-down-circle"></i> 总收入</h6>
+                                <h3 class="card-text" th:text="${#numbers.formatDecimal(totalIncome, 1, 2)}">¥0.00</h3>
+                            </div>
+                            <div class="text-end">
+                                <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stat-card expense-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title"><i class="bi bi-arrow-up-circle"></i> 总支出</h6>
+                                <h3 class="card-text" th:text="${#numbers.formatDecimal(totalExpense, 1, 2)}">¥0.00</h3>
+                            </div>
+                            <div class="text-end">
+                                <i class="bi bi-cart fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card stat-card balance-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title"><i class="bi bi-wallet2"></i> 结余</h6>
+                                <h3 class="card-text" th:text="${#numbers.formatDecimal(balance, 1, 2)}">¥0.00</h3>
+                            </div>
+                            <div class="text-end">
+                                <i class="bi bi-piggy-bank fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-calendar-month"></i> 当月统计</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4 mb-3">
+                                <h6 class="text-success"><i class="bi bi-arrow-down-circle"></i> 本月收入</h6>
+                                <h4 class="text-success" th:text="${#numbers.formatDecimal(monthIncome, 1, 2)}">¥0.00</h4>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <h6 class="text-danger"><i class="bi bi-arrow-up-circle"></i> 本月支出</h6>
+                                <h4 class="text-danger" th:text="${#numbers.formatDecimal(monthExpense, 1, 2)}">¥0.00</h4>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <h6 class="text-primary"><i class="bi bi-wallet2"></i> 本月结余</h6>
+                                <h4 class="text-primary" th:text="${#numbers.formatDecimal(monthBalance, 1, 2)}">¥0.00</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-plus-circle"></i> 快速操作</span>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="row">
+                            <div class="col-6">
+                                <a href="/transaction/add?type=1" class="text-decoration-none">
+                                    <div class="p-3 bg-success bg-opacity-10 rounded mb-2">
+                                        <i class="bi bi-plus-circle text-success fs-2"></i>
+                                    </div>
+                                    <span class="text-success">记收入</span>
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="/transaction/add?type=2" class="text-decoration-none">
+                                    <div class="p-3 bg-danger bg-opacity-10 rounded mb-2">
+                                        <i class="bi bi-dash-circle text-danger fs-2"></i>
+                                    </div>
+                                    <span class="text-danger">记支出</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-graph-up"></i> 收支趋势</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="flowChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-clock-history"></i> 最近记录</span>
+                <a href="/transaction/list" class="btn btn-sm btn-outline-primary">查看全部</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>日期</th>
+                            <th>分类</th>
+                            <th>备注</th>
+                            <th class="text-end">金额</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="record : ${recentRecords}">
+                            <td th:text="${record.transactionDate}">2024-01-01</td>
+                            <td>
+                                <i th:class="${record.categoryIcon}"></i>
+                                <span th:text="${record.categoryName}">Food</span>
+                            </td>
+                            <td th:text="${record.remark}">Lunch</td>
+                            <td class="text-end">
+                                <span th:class="${record.type == 1 ? 'text-income fw-bold' : 'text-expense fw-bold'}">
+                                    <span th:text="${record.type == 1 ? '+' : '-'}">-</span>&yen;
+                                    <span th:text="${#numbers.formatDecimal(record.amount, 1, 2)}">0.00</span>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(recentRecords)}">
+                            <td colspan="4" class="text-center text-muted py-4">暂无记录</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center py-3 mt-5">
+        <span class="text-muted">个人记账系统 &copy; 2026</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        var dailyStats = /*[[${dailyStatsJson}]]*/ '[]';
+        var data = JSON.parse(dailyStats);
+        
+        var dates = [];
+        var incomeData = [];
+        var expenseData = [];
+        var balanceData = [];
+        
+        var balance = 0;
+        data.forEach(function(item) {
+            dates.push(item.date);
+            var income = parseFloat(item.income || 0);
+            var expense = parseFloat(item.expense || 0);
+            balance += (income - expense);
+            incomeData.push(income);
+            expenseData.push(expense);
+            balanceData.push(balance.toFixed(2));
+        });
+        
+        var chart = echarts.init(document.getElementById('flowChart'));
+        var option = {
+            tooltip: {
+                trigger: 'axis',
+                formatter: function(params) {
+                    var result = params[0].name + '<br/>';
+                    params.forEach(function(item) {
+                        result += item.marker + item.seriesName + ': ¥' + item.value + '<br/>';
+                    });
+                    return result;
+                }
+            },
+            legend: {
+                data: ['收入', '支出', '累计结余']
+            },
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                top: '15%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                boundaryGap: false,
+                data: dates
+            },
+            yAxis: {
+                type: 'value',
+                axisLabel: {
+                    formatter: '¥{value}'
+                }
+            },
+            series: [
+                {
+                    name: '收入',
+                    type: 'line',
+                    smooth: true,
+                    itemStyle: { color: '#28a745' },
+                    areaStyle: { opacity: 0.1 },
+                    data: incomeData
+                },
+                {
+                    name: '支出',
+                    type: 'line',
+                    smooth: true,
+                    itemStyle: { color: '#dc3545' },
+                    areaStyle: { opacity: 0.1 },
+                    data: expenseData
+                },
+                {
+                    name: '累计结余',
+                    type: 'line',
+                    smooth: true,
+                    itemStyle: { color: '#007bff' },
+                    areaStyle: { opacity: 0.1 },
+                    data: balanceData
+                }
+            ]
+        };
+        chart.setOption(option);
+        
+        // 响应式图表
+        window.addEventListener('resize', function() {
+            chart.resize();
+        });
+    </script>
+</body>
+</html>

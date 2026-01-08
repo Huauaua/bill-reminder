@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>记录列表 - 个人记账系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .text-income{color:#28a745}
+        .text-expense{color:#dc3545}
+        .batch-actions {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="bi bi-wallet2"></i> 个人记账</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-house"></i> 首页</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/transaction/list"><i class="bi bi-list-ul"></i> 记录列表</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> <span th:text="${message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-circle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <h5 class="mb-0"><i class="bi bi-list-ul"></i> 收支记录</h5>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="btn-group">
+                            <a th:href="@{/transaction/list}" th:class="${currentType == null ? 'btn btn-primary' : 'btn btn-outline-primary'}">全部</a>
+                            <a th:href="@{/transaction/list(type=1)}" th:class="${currentType == 1 ? 'btn btn-success' : 'btn btn-outline-success'}">收入</a>
+                            <a th:href="@{/transaction/list(type=2)}" th:class="${currentType == 2 ? 'btn btn-danger' : 'btn btn-outline-danger'}">支出</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="/transaction/add?type=2" class="btn btn-danger me-1"><i class="bi bi-dash-circle"></i> 记支出</a>
+                        <a href="/transaction/add?type=1" class="btn btn-success"><i class="bi bi-plus-circle"></i> 记收入</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 批量操作按钮 -->
+        <div class="batch-actions" id="batchActions">
+            <button class="btn btn-danger btn-sm" onclick="batchDelete()">
+                <i class="bi bi-trash"></i> 批量删除
+            </button>
+            <span class="ms-2">已选择 <span id="selectedCount">0</span> 项</span>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)">
+                            </th>
+                            <th>日期</th>
+                            <th>类型</th>
+                            <th>分类</th>
+                            <th>备注</th>
+                            <th class="text-end">金额</th>
+                            <th class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="record : ${records}">
+                            <td>
+                                <input type="checkbox" class="record-checkbox" th:value="${record.id}" onclick="updateBatchActions()">
+                            </td>
+                            <td th:text="${record.transactionDate}">2024-01-01</td>
+                            <td>
+                                <span th:if="${record.type == 1}" class="badge bg-success">收入</span>
+                                <span th:if="${record.type == 2}" class="badge bg-danger">支出</span>
+                            </td>
+                            <td>
+                                <i th:class="${record.categoryIcon}"></i>
+                                <span th:text="${record.categoryName}">Food</span>
+                            </td>
+                            <td th:text="${record.remark}">Lunch</td>
+                            <td class="text-end">
+                                <span th:class="${record.type == 1 ? 'text-income fw-bold' : 'text-expense fw-bold'}">
+                                    <span th:text="${record.type == 1 ? '+' : '-'}">-</span>&yen;
+                                    <span th:text="${#numbers.formatDecimal(record.amount, 1, 2)}">0.00</span>
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a th:href="@{/transaction/edit/{id}(id=${record.id})}" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                                <a th:href="@{/transaction/delete/{id}(id=${record.id})}" class="btn btn-sm btn-outline-danger" onclick="return confirm('确定要删除这条记录吗？');"><i class="bi bi-trash"></i></a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(records)}">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <p class="mb-0 mt-2">暂无记录</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center py-3 mt-5">
+        <span class="text-muted">个人记账系统 &copy; 2026</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 批量选择功能
+        function toggleSelectAll(source) {
+            const checkboxes = document.querySelectorAll('.record-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = source.checked;
+            });
+            updateBatchActions();
+        }
+
+        // 更新批量操作按钮状态
+        function updateBatchActions() {
+            const checkboxes = document.querySelectorAll('.record-checkbox:checked');
+            const batchActions = document.getElementById('batchActions');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            selectedCount.textContent = checkboxes.length;
+            
+            if (checkboxes.length > 0) {
+                batchActions.style.display = 'block';
+            } else {
+                batchActions.style.display = 'none';
+            }
+            
+            // 更新全选复选框状态
+            const allCheckboxes = document.querySelectorAll('.record-checkbox');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            selectAllCheckbox.checked = (allCheckboxes.length > 0 && checkboxes.length === allCheckboxes.length);
+        }
+
+        // 批量删除
+        function batchDelete() {
+            const checkboxes = document.querySelectorAll('.record-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('请至少选择一项记录');
+                return;
+            }
+            
+            if (!confirm('确定要删除选中的 ' + checkboxes.length + ' 条记录吗？')) {
+                return;
+            }
+            
+            const ids = Array.from(checkboxes).map(checkbox => parseInt(checkbox.value));
+            
+            fetch('/transaction/delete-batch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(ids)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                alert('批量删除失败：' + error.message);
+            });
+        }
+        
+        // 页面加载后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateBatchActions();
+        });
+    </script>
+</body>
+</html>

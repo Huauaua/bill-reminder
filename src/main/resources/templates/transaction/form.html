@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${record.id == null ? '新增记录' : '编辑记录'} + ' - 个人记账系统'">新增记录</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .category-btn{margin:5px;min-width:100px}
+        .category-btn.active{box-shadow:0 0 0 3px rgba(13,110,253,0.5)}
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="bi bi-wallet2"></i> 个人记账</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-house"></i> 首页</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/transaction/list"><i class="bi bi-list-ul"></i> 记录列表</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i th:class="${record.id == null ? 'bi bi-plus-circle' : 'bi bi-pencil'}"></i>
+                            <span th:text="${record.id == null ? '新增记录' : '编辑记录'}">新增记录</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form th:action="@{/transaction/save}" method="post" id="recordForm">
+                            <input type="hidden" th:field="*{record.id}">
+                            
+                            <div class="mb-4">
+                                <ul class="nav nav-tabs">
+                                    <li class="nav-item">
+                                        <button class="nav-link" th:classappend="${type == 2 ? 'active' : ''}" type="button" data-type="2" id="expense-tab">
+                                            <i class="bi bi-dash-circle text-danger"></i> 支出
+                                        </button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" th:classappend="${type == 1 ? 'active' : ''}" type="button" data-type="1" id="income-tab">
+                                            <i class="bi bi-plus-circle text-success"></i> 收入
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">选择分类 <span class="text-danger">*</span></label>
+                                <div id="expense-categories" th:style="${type == 2 ? '' : 'display:none'}">
+                                    <div class="d-flex flex-wrap">
+                                        <th:block th:each="category : ${expenseCategories}">
+                                            <button type="button" class="btn btn-outline-danger category-btn"
+                                                    th:classappend="${record.categoryId == category.id ? 'active' : ''}"
+                                                    th:data-id="${category.id}">
+                                                <i th:class="${category.icon}"></i>
+                                                <span th:text="${category.name}">分类</span>
+                                            </button>
+                                        </th:block>
+                                    </div>
+                                </div>
+                                <div id="income-categories" th:style="${type == 1 ? '' : 'display:none'}">
+                                    <div class="d-flex flex-wrap">
+                                        <th:block th:each="category : ${incomeCategories}">
+                                            <button type="button" class="btn btn-outline-success category-btn"
+                                                    th:classappend="${record.categoryId == category.id ? 'active' : ''}"
+                                                    th:data-id="${category.id}">
+                                                <i th:class="${category.icon}"></i>
+                                                <span th:text="${category.name}">分类</span>
+                                            </button>
+                                        </th:block>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="categoryId" id="categoryId" th:value="${record.categoryId}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">金额 <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">&yen;</span>
+                                    <input type="number" class="form-control form-control-lg" id="amount" name="amount" 
+                                           th:value="${record.amount}" step="0.01" min="0.01" required placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="transactionDate" class="form-label">日期 <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="transactionDate" name="transactionDate" 
+                                       th:value="${record.transactionDate != null ? record.transactionDate : #temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="remark" class="form-label">备注</label>
+                                <textarea class="form-control" id="remark" name="remark" rows="2" 
+                                          th:text="${record.remark}" placeholder="添加备注信息..."></textarea>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="/transaction/list" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i> 取消
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> 保存
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center py-3 mt-5">
+        <span class="text-muted">个人记账系统 &copy; 2026</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var typeTabs = document.querySelectorAll('.nav-link[data-type]');
+            var expenseDiv = document.getElementById('expense-categories');
+            var incomeDiv = document.getElementById('income-categories');
+            var categoryInput = document.getElementById('categoryId');
+            
+            typeTabs.forEach(function(tab) {
+                tab.addEventListener('click', function() {
+                    typeTabs.forEach(function(t) { t.classList.remove('active'); });
+                    this.classList.add('active');
+                    var type = this.getAttribute('data-type');
+                    if (type === '2') {
+                        expenseDiv.style.display = '';
+                        incomeDiv.style.display = 'none';
+                    } else {
+                        expenseDiv.style.display = 'none';
+                        incomeDiv.style.display = '';
+                    }
+                    document.querySelectorAll('.category-btn').forEach(function(btn) { btn.classList.remove('active'); });
+                    categoryInput.value = '';
+                });
+            });
+            
+            document.querySelectorAll('.category-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var container = this.closest('#expense-categories, #income-categories');
+                    container.querySelectorAll('.category-btn').forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    categoryInput.value = this.getAttribute('data-id');
+                });
+            });
+            
+            document.getElementById('recordForm').addEventListener('submit', function(e) {
+                if (!categoryInput.value) {
+                    e.preventDefault();
+                    alert('请选择分类');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
